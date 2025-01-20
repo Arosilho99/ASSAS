@@ -399,6 +399,95 @@ app.post('/presentes', async (req, res) => {
     });
   }
 });
+
+app.post('/ConfigCasamento', async (req, res) => {
+  try {
+    const { Email,DataCasamento,FotoCasal,FotoNoivo,FotoNoiva,HistoriaCasal,LocalCasamento } = req.body;
+
+    // Validar os dados de entrada
+    if (!Email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email é obrigatório.',
+      });
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM casamentos WHERE email = $1',
+      [Email]
+    );
+
+
+    if (result.rowCount > 0) {
+
+      await pool.query(
+        'UPDATE casamentos SET DataCasamento = $2,FotoCasal = $3,FotoNoivo = $4,FotoNoiva = $5,HistoriaCasal = $6,LocalCasamento = $7 WHERE email = $1 ',
+        [Email,DataCasamento,FotoCasal,FotoNoivo,FotoNoiva,HistoriaCasal,LocalCasamento]
+      );
+
+      return res.json({
+        success: true,
+        message: 'Atualizado com sucesso',
+        Casamentos: result.rows,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: 'Nenhum CasamentoLocalizado',
+      });
+    }
+
+  } catch (error) {
+    console.error('Erro ao buscar:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro no servidor. Tente novamente mais tarde.',
+      error: error.message,
+    });
+  }
+});
+
+app.post('/SelectConfig', async (req, res) => {
+  try {
+    const { Email } = req.body;
+
+    // Validar os dados de entrada
+    if (!Email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email é obrigatório.',
+      });
+    }
+
+    // Buscar convidados no banco de dados
+    const result = await pool.query(
+      'SELECT * FROM casamentos WHERE email = $1',
+      [Email]
+    );
+
+    // Verificar se o convidado existe
+    if (result.rowCount > 0) {
+      return res.json({ 
+        success: true, 
+        message: 'Cadastro encontrado com sucesso!',
+        Casamentos: result.rows
+      });
+    } else {
+      return res.json({ 
+        success: false, 
+        message: 'Nenhum convidado encontrado com este email.' 
+      });
+    }
+
+  } catch (error) {
+    console.error('Erro ao buscar convidados:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro no servidor. Tente novamente mais tarde.',
+      error: error.message,
+    });
+  }
+});
 // Iniciar o servidor
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
